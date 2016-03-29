@@ -1,6 +1,7 @@
 package com.aberdeenhs.test;
 
 import org.zeromq.ZContext;
+import org.zeromq.ZFrame;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
@@ -38,6 +39,7 @@ public class PublisherThread extends Thread {
         sync3.add(buff2.array());
         sync3.send(publisher);
         Utils.LOG("Sending # of messages");
+
 
         try {
             Thread.sleep(500);

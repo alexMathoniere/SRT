@@ -13,14 +13,14 @@ public class Main {
    public static void main(String[] args){
 
 
-//    SubscriberThread subscriberThread = new SubscriberThread((byte)1);
-//    subscriberThread.start();
-//
-//       try {
-//           Thread.sleep(1000);
-//       } catch (InterruptedException e) {
-//           e.printStackTrace();
-//       }
+    SubscriberThread subscriberThread = new SubscriberThread((byte)1);
+    subscriberThread.start();
+
+       try {
+          Thread.sleep(1000);
+       } catch (InterruptedException e) {
+          e.printStackTrace();
+       }
 
        PublisherThread publisherThread = new PublisherThread((byte)2);
        publisherThread.start();
@@ -32,7 +32,7 @@ public class Main {
        }
 
 
-//       subscriberThread.finish();
+       subscriberThread.finish();
    }
 
 

@@ -26,6 +26,9 @@ public class SubscriberThread extends Thread{
         subscriber = context.createSocket(ZMQ.SUB);
         subscriber.connect("tcp://127.0.0.1:5557");
 
+        ZMQ.Socket publisher = context.createSocket(ZMQ.PUB);
+        publisher.bind("tcp://127.0.0.1:5560");
+
         subscriber.subscribe("".getBytes());
 
         ZMsg msg = null;
@@ -110,6 +113,14 @@ public class SubscriberThread extends Thread{
                             // receiver synchronization GRC stuff
                         }else{
                             Utils.LOG("Discarded message");
+
+                            ZMsg badMessage = new ZMsg();
+                            ByteBuffer buff = ByteBuffer.allocate(13);
+                            String bad = "BADMESSAGE";
+                            buff.put(bad.getBytes());
+
+                            badMessage.add(buff.array());
+                            badMessage.send(publisher);
                         }
                     }
                 }
