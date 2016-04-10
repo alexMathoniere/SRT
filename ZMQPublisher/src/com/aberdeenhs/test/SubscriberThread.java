@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 public class SubscriberThread extends Thread{
 
-    private ZMQ.Socket subscriber;
+    //private ZMQ.Socket subscriber;
     byte id = 0;
 
     public SubscriberThread(byte id){
@@ -24,8 +24,8 @@ public class SubscriberThread extends Thread{
         Utils.LOG("Starting Subscriber");
 
         ZContext context = new ZContext();
-        subscriber = context.createSocket(ZMQ.SUB);
-        subscriber.connect("tcp://127.0.0.1:5560");
+        ZMQ.Socket subscriber = context.createSocket(ZMQ.SUB);
+        subscriber.connect("tcp://127.0.0.1:5561");
 
         subscriber.subscribe("".getBytes());
 
@@ -43,19 +43,8 @@ public class SubscriberThread extends Thread{
                     if(frame != null){
 
                         byte[] bytes = frame.getData(); // gets full 17 bytes
-
-                        if(bytes[0]!=0){
-                            ByteBuffer buffer = ByteBuffer.wrap(bytes);
-
-                            byte[] remainingStuff = new byte[13];
-
-                            buffer.get(remainingStuff);
-                            String message = new String(remainingStuff);
-
-                            if(message.equals("BADMESSAGE")){
-                                Utils.LOG("Publisher not working right");
-                            }
-                        }
+                        int freqID = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                        Utils.LOG("frequency ID: "+freqID);
                     }
                 }
             }catch(Exception e){
@@ -63,7 +52,7 @@ public class SubscriberThread extends Thread{
             }
         }
 
-        subscriber.disconnect("tcp://localhost:5560");
+        subscriber.disconnect("tcp://127.0.0.1:5560");
         subscriber.close();
 
     }

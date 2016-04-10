@@ -4,6 +4,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMsg;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 
 
@@ -26,8 +27,10 @@ public class SubscriberThread extends Thread{
         subscriber = context.createSocket(ZMQ.SUB);
         subscriber.connect("tcp://127.0.0.1:5557");
 
-        ZMQ.Socket publisher = context.createSocket(ZMQ.PUB);
+        ZMQ.Socket publisher = context.createSocket(ZMQ.PUB); //connect to GRC sender
         publisher.bind("tcp://127.0.0.1:5560");
+        ZMQ.Socket publisher2 = context.createSocket(ZMQ.PUB); //connect to GRC receiver
+        publisher2.bind("tcp://127.0.0.1:5562");
 
         subscriber.subscribe("".getBytes());
 
@@ -36,6 +39,10 @@ public class SubscriberThread extends Thread{
         long timeLast = 0;
         int messageReceiveCount = 0;
         int totalMessages = 1;
+        int chunkTotal = 0;
+        int triggered = 0;
+        int triggeredTotal = 0;
+        int freqID = 1;
 
         while(!Thread.currentThread().isInterrupted()){
 
@@ -46,6 +53,7 @@ public class SubscriberThread extends Thread{
                 //msg.popString();
                 if (msg != null){
                     messageReceiveCount = messageReceiveCount + 1;
+                    chunkTotal++;
                     Utils.LOG(" - Subscriber: msg # " + messageReceiveCount + " received");
                 ZFrame frame = msg.getFirst();
                     if(frame != null){
@@ -86,6 +94,29 @@ public class SubscriberThread extends Thread{
 
                             latencies.add(now-then-500);
 
+                            if(receiveDelta >= 5000){ //if it missed at least 5 messages, trigger the "BADMESSAGE"
+                                triggered = latencies.size() - triggeredTotal; //gets number of messages that have gone through since the last time this was triggered
+
+                                //don't just trigger this on one dropped packet; identify a trend before sending
+                                if((triggered*1.0)/chunkTotal <= 0.8){ //checks for less than 80% MCR
+                                    ZMsg badMessage = new ZMsg();
+                                    // validate Freq ID is within bounds
+                                    if ( (freqID > 3) || (freqID < 1) ) {
+                                        freqID = 1;
+                                    }
+                                    // add integer as byte array[4] to message, specifying byteorder
+                                    badMessage.add(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt((freqID)).array());
+                                    // send message
+                                    badMessage.send(publisher);
+                                    badMessage.send(publisher2);
+                                    // change freqID for next go around
+                                    freqID++;
+
+                                    triggeredTotal += triggered;
+                                    chunkTotal = 0; //resets number of messages to use as total next time this is triggered
+                                }
+                            }
+
                             byte[] remainingStuff = new byte[buffer.remaining()];
                             Utils.LOG("RemainingStuff Size: " + remainingStuff.length);
 
@@ -114,13 +145,29 @@ public class SubscriberThread extends Thread{
                         }else{
                             Utils.LOG("Discarded message");
 
-                            ZMsg badMessage = new ZMsg();
-                            ByteBuffer buff = ByteBuffer.allocate(13);
-                            String bad = "BADMESSAGE";
-                            buff.put(bad.getBytes());
+                            triggered = latencies.size() - triggeredTotal; //gets number of messages that have gone through since the last time this was triggered
 
-                            badMessage.add(buff.array());
-                            badMessage.send(publisher);
+                            //don't just trigger this on one dropped packet; identify a trend before sending
+                            if((triggered*1.0)/chunkTotal <= 0.8){ //checks for less than 80% MCR
+                                ZMsg badMessage = new ZMsg();
+                                // validate Freq ID is within bounds
+                                if ( (freqID > 3) || (freqID < 1) ) {
+                                    freqID = 1;
+                                }
+                                // add integer as byte array[4] to message, specifying byteorder
+                                badMessage.add(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt((freqID)).array());
+                                // send message
+                                badMessage.send(publisher);
+                                badMessage.send(publisher2);
+                                // change freqID for next go around
+                                freqID++;
+
+                                triggeredTotal += triggered;
+                                chunkTotal = 0; //resets number of messages to use as total next time this is triggered
+                            }
+
+
+
                         }
                     }
                 }
@@ -134,6 +181,8 @@ public class SubscriberThread extends Thread{
         Utils.LOG("Completion rate: "+latencies.size()/(1.0*totalMessages));
         subscriber.disconnect("tcp://localhost:5557");
         subscriber.close();
+        publisher.close();
+        publisher2.close();
 
     }
 

@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Receiver:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Receiver_jar</output-path>
+    <root id="archive" name="Receiver.jar">
+      <element id="module-output" name="Receiver" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/jeromq-0.3.5.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

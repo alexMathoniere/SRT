@@ -25,7 +25,7 @@ public class PublisherThread extends Thread {
         ZMQ.Socket publisher = context.createSocket(ZMQ.PUB);
         publisher.bind("tcp://127.0.0.1:5558");
 
-        int loopCount = 750;        // number
+        int loopCount = 50;        // number
         int sleepTimer = 500;  // msec
 //        SimpleDateFormat format = new SimpleDateFormat("MM/dd/yy HH:mm:ss");
 //        String DateToStr = null;
@@ -33,7 +33,7 @@ public class PublisherThread extends Thread {
         ZMsg sync3 = new ZMsg();
         ByteBuffer buff2 = ByteBuffer.allocate(Main.BUFFER_SIZE);
         buff2.putInt(Integer.MAX_VALUE);
-        byte[] B2 = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+        byte[] B2 = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         buff2.put(B2);
 
         sync3.add(buff2.array());
@@ -49,7 +49,7 @@ public class PublisherThread extends Thread {
 
         ZMsg numMessages = new ZMsg();
 
-        ByteBuffer messageNumBuff = ByteBuffer.allocate(Main.BUFFER_SIZE);
+        ByteBuffer messageNumBuff = ByteBuffer.allocate(Main.BUFFER_SIZE); //sends number of messages to receiver for MCR calculations
 
         Long firstTime = System.currentTimeMillis(); // Long 64 bits (8 bytes)
         messageNumBuff.putInt(firstTime.intValue()); // int 32 bits (4 bytes)
@@ -74,14 +74,14 @@ public class PublisherThread extends Thread {
             //Date currentDate = new Date();
             //DateToStr = format.format(currentDate);
 
-           /* msg.add("Q"); //smaller tag for the subscriber to look for
-            msg.add("Computer 1");  //get the sender
-            msg.add("%");
-            msg.add("Computer 2");  //get the receiver
-            msg.add("%");
-            msg.add(DateToStr);  //get the time
-            msg.add("%");
-            msg.add("This is data.");  //get the message*/
+//           /* msg.add("Q"); //smaller tag for the subscriber to look for
+//            msg.add("Computer 1");  //get the sender
+//            msg.add("%");
+//            msg.add("Computer 2");  //get the receiver
+//            msg.add("%");
+//            msg.add(DateToStr);  //get the time
+//            msg.add("%");
+//            msg.add("This is data.");  //get the message*/
 
             //try and put this all in 20 bytes. Time is 8. Look at bitmasking/bitshifting
             //int ~ = (stuff on the left << size of stuff on right)|stuff on right
